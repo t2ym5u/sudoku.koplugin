@@ -64,6 +64,17 @@ local function emptyNotes()
     return notes
 end
 
+local function emptyMarkerGrid()
+    local grid = {}
+    for r = 1, 9 do
+        grid[r] = {}
+        for c = 1, 9 do
+            grid[r][c] = false
+        end
+    end
+    return grid
+end
+
 local function cloneNoteCell(cell)
     if not cell then
         return nil
@@ -236,6 +247,7 @@ function SudokuBoard:new()
         user = emptyGrid(),
         conflicts = emptyGrid(),
         notes = emptyNotes(),
+        wrong_marks = emptyMarkerGrid(),
         selected = { row = 1, col = 1 },
         difficulty = DEFAULT_DIFFICULTY,
         reveal_solution = false,
@@ -252,6 +264,7 @@ function SudokuBoard:serialize()
         solution = copyGrid(self.solution),
         user = copyGrid(self.user),
         notes = copyNotes(self.notes),
+        wrong_marks = copyGrid(self.wrong_marks),
         selected = { row = self.selected.row, col = self.selected.col },
         difficulty = self.difficulty,
         reveal_solution = self.reveal_solution,
@@ -266,6 +279,11 @@ function SudokuBoard:load(state)
     self.solution = copyGrid(state.solution)
     self.user = copyGrid(state.user)
     self.notes = copyNotes(state.notes)
+    if state.wrong_marks then
+        self.wrong_marks = copyGrid(state.wrong_marks)
+    else
+        self.wrong_marks = emptyMarkerGrid()
+    end
     self.difficulty = state.difficulty or DEFAULT_DIFFICULTY
     self.undo_stack = {}
     if state.selected then
@@ -289,6 +307,7 @@ function SudokuBoard:generate(difficulty)
     self.solution = solution
     self.user = emptyGrid()
     self.notes = emptyNotes()
+    self.wrong_marks = emptyMarkerGrid()
     self.selected = { row = 1, col = 1 }
     self.reveal_solution = false
     self.undo_stack = {}
@@ -415,6 +434,7 @@ function SudokuBoard:setValue(value)
 
     self.user[row][col] = new_value
     self:clearNotes(row, col)
+    self:clearWrongMark(row, col)
     self:recalcConflicts()
     if prev_value ~= new_value or prev_notes then
         self:pushUndo{
@@ -467,6 +487,39 @@ function SudokuBoard:getCellNotes(row, col)
         end
     end
     return nil
+end
+
+function SudokuBoard:clearWrongMarks()
+    for r = 1, 9 do
+        for c = 1, 9 do
+            self.wrong_marks[r][c] = false
+        end
+    end
+end
+
+function SudokuBoard:clearWrongMark(row, col)
+    if self.wrong_marks[row] then
+        self.wrong_marks[row][col] = false
+    end
+end
+
+function SudokuBoard:hasWrongMark(row, col)
+    return self.wrong_marks[row] and self.wrong_marks[row][col] or false
+end
+
+function SudokuBoard:updateWrongMarks()
+    self:clearWrongMarks()
+    local has_wrong = false
+    for r = 1, 9 do
+        for c = 1, 9 do
+            local value = self.user[r][c]
+            if value ~= 0 and value ~= self.solution[r][c] then
+                self.wrong_marks[r][c] = true
+                has_wrong = true
+            end
+        end
+    end
+    return has_wrong
 end
 
 function SudokuBoard:toggleNoteDigit(value)
@@ -528,6 +581,7 @@ function SudokuBoard:undo()
         self.notes[row][col] = cloneNoteCell(entry.prev_notes) or {}
         self:setSelection(row, col)
         self:recalcConflicts()
+        self:clearWrongMark(row, col)
     elseif entry.type == "notes" then
         self.notes[row][col] = cloneNoteCell(entry.prev_notes) or {}
         self:setSelection(row, col)
@@ -612,6 +666,17 @@ local function drawLine(bb, x, y, w, h, color)
     bb:paintRect(x, y, w, h, color)
 end
 
+local function drawDiagonalLine(bb, x, y, length, dx, dy, color, thickness)
+    color = color or Blitbuffer.COLOR_BLACK
+    thickness = thickness or 1
+    length = math.max(0, length)
+    for step = 0, length do
+        local px = math.floor(x + dx * step)
+        local py = math.floor(y + dy * step)
+        bb:paintRect(px, py, thickness, thickness, color)
+    end
+end
+
 function SudokuBoardWidget:paintTo(bb, x, y)
     if not self.board then
         return
@@ -661,6 +726,12 @@ function SudokuBoardWidget:paintTo(bb, x, y)
                     bb:paintRect(cell_x + cell - padding - dot, cell_y + padding, dot, dot, dot_color)
                     bb:paintRect(cell_x + padding, cell_y + cell - padding - dot, dot, dot, dot_color)
                     bb:paintRect(cell_x + cell - padding - dot, cell_y + cell - padding - dot, dot, dot, dot_color)
+                elseif self.board:hasWrongMark(row, col) then
+                    local padding = math.max(1, math.floor(cell / 12))
+                    local diag_len = math.max(0, math.floor(cell - padding * 2))
+                    local cross_thickness = math.max(2, math.floor(cell / 18))
+                    drawDiagonalLine(bb, cell_x + padding, cell_y + padding, diag_len, 1, 1, Blitbuffer.COLOR_BLACK, cross_thickness)
+                    drawDiagonalLine(bb, cell_x + padding, cell_y + cell - padding, diag_len, 1, -1, Blitbuffer.COLOR_BLACK, cross_thickness)
                 end
             else
                 local notes = self.board:getCellNotes(row, col)
@@ -1010,6 +1081,9 @@ function SudokuScreen:ensureShowButtonState()
 end
 
 function SudokuScreen:checkProgress()
+    self.board:updateWrongMarks()
+    self.board_widget:refresh()
+    self.plugin:saveState()
     if self.board:isSolved() then
         self:updateStatus(_("Everything looks good!"))
     elseif self.board:getRemainingCells() == 0 then
