@@ -483,7 +483,11 @@ function SudokuBoard:toggleNoteDigit(value)
     self.notes[row][col] = self.notes[row][col] or {}
     local prev_cell = cloneNoteCell(self.notes[row][col])
     local was_set = self.notes[row][col][value] and true or false
-    self.notes[row][col][value] = was_set and nil or true
+    if was_set then
+        self.notes[row][col][value] = nil
+    else
+        self.notes[row][col][value] = true
+    end
     local now_set = self.notes[row][col][value] and true or false
     if was_set == now_set then
         return true
