@@ -10,7 +10,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = require("gettext")
 
 local board_module = require("board")
-local SudokuBoard = board_module.SudokuBoard
+local SudokuBoard    = board_module.SudokuBoard
 local DEFAULT_DIFFICULTY = board_module.DEFAULT_DIFFICULTY
 
 local SudokuScreen = require("screen")
@@ -51,6 +51,8 @@ end
 function Sudoku:getBoard()
     if not self.board then
         self:ensureSettings()
+        -- Create a default board; load() will restore n/box_rows/box_cols from
+        -- the saved state (old saves without those fields default to 9×9).
         self.board = SudokuBoard:new()
         local state = self.settings:readSetting("state")
         if not self.board:load(state) then

@@ -17,9 +17,15 @@ local VerticalSpan = require("ui/widget/verticalspan")
 local _ = require("gettext")
 local T = require("ffi/util").template
 
+local board_module = require("board")
 local SudokuBoardWidget = require("board_widget")
 
 local Screen = Device.screen
+
+-- Digits 10+ display as A-G (must match board_widget)
+local function digitToChar(d)
+    return d <= 9 and tostring(d) or string.char(55 + d)
+end
 
 local DIFFICULTY_ORDER = { "easy", "medium", "hard" }
 local DIFFICULTY_LABELS = {
@@ -47,12 +53,8 @@ function SudokuScreen:init()
         text = _("Tap a cell, then pick a number."),
         face = Font:getFace("smallinfofont"),
     }
-    self.board_widget = SudokuBoardWidget:new{
-        board = self.board,
-        onSelectionChanged = function()
-            self:updateStatus()
-        end,
-    }
+    -- board_widget is created inside buildLayout() so it can be recreated
+    -- when the grid size changes.
     self:buildLayout()
     UIManager:setDirty(self, function()
         return "ui", self.dimen
@@ -73,6 +75,15 @@ function SudokuScreen:paintTo(bb, x, y)
 end
 
 function SudokuScreen:buildLayout()
+    -- (Re)create the board widget for the current board.
+    -- This is called on init and again when grid size changes.
+    self.board_widget = SudokuBoardWidget:new{
+        board = self.board,
+        onSelectionChanged = function()
+            self:updateStatus()
+        end,
+    }
+
     local is_landscape = Screen:getWidth() > Screen:getHeight()
     local sw = Screen:getWidth()
 
@@ -92,6 +103,7 @@ function SudokuScreen:buildLayout()
         and button_width
         or math.floor(sw * 0.75)
 
+    -- Top action bar: [New game] [Grid] [Difficulty] [Show result] [Close]
     local top_buttons = ButtonTable:new{
         shrink_unneeded_width = true,
         width = button_width,
@@ -101,6 +113,13 @@ function SudokuScreen:buildLayout()
                     text = _("New game"),
                     callback = function()
                         self:onNewGame()
+                    end,
+                },
+                {
+                    id = "grid_button",
+                    text = self:getGridButtonText(),
+                    callback = function()
+                        self:openGridMenu()
                     end,
                 },
                 {
@@ -129,25 +148,31 @@ function SudokuScreen:buildLayout()
         },
     }
     self.show_result_button = top_buttons:getButtonById("show_result")
-    self.difficulty_button = top_buttons:getButtonById("difficulty_button")
+    self.difficulty_button  = top_buttons:getButtonById("difficulty_button")
+    self.grid_button        = top_buttons:getButtonById("grid_button")
 
+    -- Digit keypad: box_rows rows of box_cols buttons, then an action row
+    local n        = self.board.n
+    local box_rows = self.board.box_rows
+    local box_cols = self.board.box_cols
     local keypad_rows = {}
-    local value = 1
-    for _ = 1, 3 do
+    local digit = 1
+    for _ = 1, box_rows do
         local row = {}
-        for _ = 1, 3 do
-            local digit = value
+        for _ = 1, box_cols do
+            local d = digit
             row[#row + 1] = {
-                id = "digit_" .. digit,
-                text = tostring(digit),
+                id = "digit_" .. d,
+                text = digitToChar(d),
                 callback = function()
-                    self:onDigit(digit)
+                    self:onDigit(d)
                 end,
             }
-            value = value + 1
+            digit = digit + 1
         end
         keypad_rows[#keypad_rows + 1] = row
     end
+    -- Action row (always 4 buttons)
     keypad_rows[#keypad_rows + 1] = {
         {
             id = "note_button",
@@ -184,7 +209,7 @@ function SudokuScreen:buildLayout()
     self.note_button = keypad:getButtonById("note_button")
     self.undo_button = keypad:getButtonById("undo_button")
     self.digit_buttons = {}
-    for d = 1, 9 do
+    for d = 1, n do
         self.digit_buttons[d] = keypad:getButtonById("digit_" .. d)
     end
 
@@ -223,39 +248,65 @@ function SudokuScreen:buildLayout()
     self:updateUndoButton()
     self:updateDigitButtons()
     self:updateDifficultyButton()
+    self:updateGridButton()
     self:updateStatus()
 end
+
+-- ---------------------------------------------------------------------------
+-- Button text helpers
+-- ---------------------------------------------------------------------------
 
 function SudokuScreen:getNoteButtonText()
     return self.note_mode and _("Note: On") or _("Note: Off")
 end
 
+function SudokuScreen:getDifficultyButtonText()
+    local label = DIFFICULTY_LABELS[self.board.difficulty] or self.board.difficulty
+    return T(_("Diff: %1"), label)
+end
+
+function SudokuScreen:getGridButtonText()
+    return T(_("Grid: %1"), self.board.n .. "×" .. self.board.n)
+end
+
+-- ---------------------------------------------------------------------------
+-- Button update helpers
+-- ---------------------------------------------------------------------------
+
 function SudokuScreen:updateNoteButton()
-    if not self.note_button then
-        return
-    end
-    local width = self.note_button.width
-    self.note_button:setText(self:getNoteButtonText(), width)
+    if not self.note_button then return end
+    self.note_button:setText(self:getNoteButtonText(), self.note_button.width)
 end
 
 function SudokuScreen:updateUndoButton()
-    if not self.undo_button then
-        return
-    end
+    if not self.undo_button then return end
     self.undo_button:enableDisable(self.board:canUndo())
 end
 
 function SudokuScreen:updateDigitButtons()
-    if not self.digit_buttons then
-        return
-    end
-    for d = 1, 9 do
+    if not self.digit_buttons then return end
+    local n = self.board.n
+    for d = 1, n do
         local btn = self.digit_buttons[d]
         if btn then
-            btn:enableDisable(self.board:countDigit(d) < 9)
+            btn:enableDisable(self.board:countDigit(d) < n)
         end
     end
 end
+
+function SudokuScreen:updateDifficultyButton()
+    if not self.difficulty_button then return end
+    self.difficulty_button:setText(self:getDifficultyButtonText(), self.difficulty_button.width)
+end
+
+function SudokuScreen:updateGridButton()
+    if not self.grid_button then return end
+    self.grid_button:setText(self:getGridButtonText(), self.grid_button.width)
+end
+
+-- ---------------------------------------------------------------------------
+-- Mode toggles
+-- ---------------------------------------------------------------------------
 
 function SudokuScreen:toggleNoteMode()
     self.note_mode = not self.note_mode
@@ -263,18 +314,9 @@ function SudokuScreen:toggleNoteMode()
     self:updateStatus(self.note_mode and _("Note mode enabled.") or _("Note mode disabled."))
 end
 
-function SudokuScreen:getDifficultyButtonText()
-    local label = DIFFICULTY_LABELS[self.board.difficulty] or self.board.difficulty
-    return T(_("Difficulty: %1"), label)
-end
-
-function SudokuScreen:updateDifficultyButton()
-    if not self.difficulty_button then
-        return
-    end
-    local width = self.difficulty_button.width
-    self.difficulty_button:setText(self:getDifficultyButtonText(), width)
-end
+-- ---------------------------------------------------------------------------
+-- Menus
+-- ---------------------------------------------------------------------------
 
 function SudokuScreen:openDifficultyMenu()
     local menu
@@ -290,9 +332,7 @@ function SudokuScreen:openDifficultyMenu()
             self:updateStatus()
         end
         self:updateDifficultyButton()
-        if menu then
-            UIManager:close(menu)
-        end
+        if menu then UIManager:close(menu) end
         return true
     end
 
@@ -301,12 +341,9 @@ function SudokuScreen:openDifficultyMenu()
         items[#items + 1] = {
             text = DIFFICULTY_LABELS[level] or level,
             checked = (level == self.board.difficulty),
-            callback = function()
-                return selectDifficulty(level)
-            end,
+            callback = function() return selectDifficulty(level) end,
         }
     end
-
     menu = Menu:new{
         title = _("Select difficulty"),
         item_table = items,
@@ -317,6 +354,54 @@ function SudokuScreen:openDifficultyMenu()
     }
     UIManager:show(menu)
 end
+
+function SudokuScreen:openGridMenu()
+    local menu
+    local function selectGrid(cfg)
+        if cfg.id ~= self.board.grid_id then
+            UIManager:close(menu)
+            self:onGridChange(cfg.id)
+        else
+            if menu then UIManager:close(menu) end
+        end
+        return true
+    end
+
+    local items = {}
+    for _, cfg in ipairs(board_module.GRID_CONFIGS) do
+        items[#items + 1] = {
+            text = cfg.label,
+            checked = (cfg.id == self.board.grid_id),
+            callback = function() return selectGrid(cfg) end,
+        }
+    end
+    menu = Menu:new{
+        title = _("Select grid size"),
+        item_table = items,
+        width = math.floor(Screen:getWidth() * 0.7),
+        height = math.floor(Screen:getHeight() * 0.9),
+        disable_footer_padding = true,
+        show_parent = self,
+    }
+    UIManager:show(menu)
+end
+
+function SudokuScreen:onGridChange(grid_id)
+    local prev_difficulty = self.board.difficulty
+    local cfg = board_module.getGridConfig(grid_id)
+    self.board = board_module.SudokuBoard:new(cfg)
+    self.board:generate(prev_difficulty)
+    self.plugin.board = self.board
+    self.plugin:saveState()
+    self:buildLayout()
+    UIManager:setDirty(self, function()
+        return "ui", self.dimen
+    end)
+end
+
+-- ---------------------------------------------------------------------------
+-- Status bar
+-- ---------------------------------------------------------------------------
 
 function SudokuScreen:updateStatus(message)
     local status
@@ -339,6 +424,10 @@ function SudokuScreen:updateStatus(message)
         return "ui", self.dimen
     end)
 end
+
+-- ---------------------------------------------------------------------------
+-- Game actions
+-- ---------------------------------------------------------------------------
 
 function SudokuScreen:onDigit(value)
     if self.note_mode then
@@ -402,12 +491,9 @@ function SudokuScreen:toggleSolution()
 end
 
 function SudokuScreen:ensureShowButtonState()
-    if not self.show_result_button then
-        return
-    end
+    if not self.show_result_button then return end
     local text = self.board:isShowingSolution() and _("Hide result") or _("Show result")
-    local width = self.show_result_button.width
-    self.show_result_button:setText(text, width)
+    self.show_result_button:setText(text, self.show_result_button.width)
 end
 
 function SudokuScreen:checkProgress()

@@ -11,6 +11,11 @@ local UIManager = require("ui/uimanager")
 local Screen = Device.screen
 local DISPLAY_PINS_ON_GIVEN = true
 
+-- Digits 10-16 display as A-G (10→A, 11→B, …)
+local function digitToChar(d)
+    return d <= 9 and tostring(d) or string.char(55 + d)
+end
+
 -- ---------------------------------------------------------------------------
 -- Drawing helpers
 -- ---------------------------------------------------------------------------
@@ -31,7 +36,7 @@ local function drawDiagonalLine(bb, x, y, length, dx, dy, color, thickness)
 end
 
 -- ---------------------------------------------------------------------------
--- SudokuBoardWidget — renders the 9×9 grid
+-- SudokuBoardWidget — renders the N×N grid
 -- ---------------------------------------------------------------------------
 
 local SudokuBoardWidget = InputContainer:extend{
@@ -39,6 +44,13 @@ local SudokuBoardWidget = InputContainer:extend{
 }
 
 function SudokuBoardWidget:init()
+    local n        = self.board and self.board.n        or 9
+    local box_rows = self.board and self.board.box_rows or 3
+    local box_cols = self.board and self.board.box_cols or 3
+    self.n        = n
+    self.box_rows = box_rows
+    self.box_cols = box_cols
+
     self.size = math.floor(math.min(Screen:getWidth(), Screen:getHeight()) * 0.82)
     self.dimen = Geom:new{ w = self.size, h = self.size }
     self.paint_rect = Geom:new{ x = 0, y = 0, w = self.size, h = self.size }
@@ -48,13 +60,17 @@ function SudokuBoardWidget:init()
     self.number_cell_padding = 0
     self.note_face_size = self.note_face.size
     self.note_mini_padding = 0
+
+    -- Note font: sized to fit in a mini cell (cell / box_cols × cell / box_rows)
     do
-        local cell = self.size / 9
-        local mini = cell / 3
+        local cell = self.size / n
+        local mini_w = cell / box_cols
+        local mini_h = cell / box_rows
+        local mini   = math.min(mini_w, mini_h)
         local padding = math.max(1, math.floor(mini / 8))
-        local safety = math.max(1, math.floor(mini / 18))
-        local max_w = math.max(1, math.floor(mini - 2 * padding - safety))
-        local max_h = math.max(1, math.floor(mini - 2 * padding - safety))
+        local safety  = math.max(1, math.floor(mini / 18))
+        local max_w = math.max(1, math.floor(mini_w - 2 * padding - safety))
+        local max_h = math.max(1, math.floor(mini_h - 2 * padding - safety))
         local size = self.note_face_size
         while size > 8 do
             local face = Font:getFace("smallinfofont", size)
@@ -70,10 +86,12 @@ function SudokuBoardWidget:init()
             size = size - 1
         end
     end
+
+    -- Number font: sized to fit in a full cell
     do
-        local cell = self.size / 9
+        local cell = self.size / n
         local padding = math.max(2, math.floor(cell / 9))
-        local safety = math.max(1, math.floor(cell / 20))
+        local safety  = math.max(1, math.floor(cell / 20))
         local max_w = math.max(1, math.floor(cell - 2 * padding - safety))
         local max_h = math.max(1, math.floor(cell - 2 * padding - safety))
         local size = self.number_face_size
@@ -91,6 +109,7 @@ function SudokuBoardWidget:init()
             size = size - 1
         end
     end
+
     self.ges_events = {
         Tap = {
             GestureRange:new{
@@ -108,10 +127,10 @@ function SudokuBoardWidget:getCellFromPoint(x, y)
     if local_x < 0 or local_y < 0 or local_x > rect.w or local_y > rect.h then
         return nil
     end
-    local cell_size = rect.w / 9
+    local cell_size = rect.w / self.n
     local col = math.floor(local_x / cell_size) + 1
     local row = math.floor(local_y / cell_size) + 1
-    if row < 1 or row > 9 or col < 1 or col > 9 then
+    if row < 1 or row > self.n or col < 1 or col > self.n then
         return nil
     end
     return row, col
@@ -144,8 +163,11 @@ function SudokuBoardWidget:paintTo(bb, x, y)
     if not self.board then
         return
     end
+    local n        = self.n
+    local box_rows = self.box_rows
+    local box_cols = self.box_cols
     self.paint_rect = Geom:new{ x = x, y = y, w = self.dimen.w, h = self.dimen.h }
-    local cell = self.dimen.w / 9
+    local cell = self.dimen.w / n
     bb:paintRect(x, y, self.dimen.w, self.dimen.h, Blitbuffer.COLOR_WHITE)
     local sel_row, sel_col = self.board:getSelection()
     local band_highlight = Blitbuffer.COLOR_GRAY_D
@@ -153,13 +175,17 @@ function SudokuBoardWidget:paintTo(bb, x, y)
     bb:paintRect(x + (sel_col - 1) * cell, y, cell, self.dimen.h, band_highlight)
     bb:paintRect(x, y + (sel_row - 1) * cell, self.dimen.w, cell, band_highlight)
     bb:paintRect(x + (sel_col - 1) * cell, y + (sel_row - 1) * cell, cell, cell, cell_highlight)
-    for i = 0, 9 do
-        local thickness = (i % 3 == 0) and Size.line.thick or Size.line.thin
-        drawLine(bb, x + math.floor(i * cell), y, thickness, self.dimen.h, Blitbuffer.COLOR_BLACK)
-        drawLine(bb, x, y + math.floor(i * cell), self.dimen.w, thickness, Blitbuffer.COLOR_BLACK)
+
+    -- Grid lines: thick at box boundaries, thin elsewhere
+    for i = 0, n do
+        local v_thick = (i % box_cols == 0) and Size.line.thick or Size.line.thin
+        local h_thick = (i % box_rows == 0) and Size.line.thick or Size.line.thin
+        drawLine(bb, x + math.floor(i * cell), y, v_thick, self.dimen.h, Blitbuffer.COLOR_BLACK)
+        drawLine(bb, x, y + math.floor(i * cell), self.dimen.w, h_thick, Blitbuffer.COLOR_BLACK)
     end
-    for row = 1, 9 do
-        for col = 1, 9 do
+
+    for row = 1, n do
+        for col = 1, n do
             local value, is_given = self.board:getDisplayValue(row, col)
             if value then
                 local cell_x = x + (col - 1) * cell
@@ -175,7 +201,7 @@ function SudokuBoardWidget:paintTo(bb, x, y)
                 if self.board:isConflict(row, col) then
                     color = Blitbuffer.COLOR_RED
                 end
-                local text = tostring(value)
+                local text = digitToChar(value)
                 local cell_padding = self.number_cell_padding or 0
                 local cell_inner = math.max(1, math.floor(cell - 2 * cell_padding))
                 local metrics = RenderText:sizeUtf8Text(0, cell_inner, self.number_face, text, true, false)
@@ -201,19 +227,22 @@ function SudokuBoardWidget:paintTo(bb, x, y)
             else
                 local notes = self.board:getCellNotes(row, col)
                 if notes then
-                    local mini = cell / 3
+                    -- Mini cells: box_cols per row, box_rows per column
+                    local mini_w = cell / box_cols
+                    local mini_h = cell / box_rows
                     local mini_padding = self.note_mini_padding or 0
-                    local mini_inner = math.max(1, math.floor(mini - 2 * mini_padding))
-                    for digit = 1, 9 do
+                    local mini_inner_w = math.max(1, math.floor(mini_w - 2 * mini_padding))
+                    local mini_inner_h = math.max(1, math.floor(mini_h - 2 * mini_padding))
+                    for digit = 1, n do
                         if notes[digit] then
-                            local mini_col = (digit - 1) % 3
-                            local mini_row = math.floor((digit - 1) / 3)
-                            local mini_x = x + (col - 1) * cell + mini_col * mini
-                            local mini_y = y + (row - 1) * cell + mini_row * mini
-                            local note_text = tostring(digit)
-                            local note_metrics = RenderText:sizeUtf8Text(0, mini_inner, self.note_face, note_text, true, false)
-                            local note_baseline = mini_y + mini_padding + math.floor((mini_inner + note_metrics.y_top - note_metrics.y_bottom) / 2)
-                            local note_x = mini_x + mini_padding + math.floor((mini_inner - note_metrics.x) / 2)
+                            local mini_col = (digit - 1) % box_cols
+                            local mini_row = math.floor((digit - 1) / box_cols)
+                            local mini_x = x + (col - 1) * cell + mini_col * mini_w
+                            local mini_y = y + (row - 1) * cell + mini_row * mini_h
+                            local note_text = digitToChar(digit)
+                            local note_metrics = RenderText:sizeUtf8Text(0, mini_inner_w, self.note_face, note_text, true, false)
+                            local note_baseline = mini_y + mini_padding + math.floor((mini_inner_h + note_metrics.y_top - note_metrics.y_bottom) / 2)
+                            local note_x = mini_x + mini_padding + math.floor((mini_inner_w - note_metrics.x) / 2)
                             RenderText:renderUtf8Text(bb, note_x, note_baseline, self.note_face, note_text, true, false, Blitbuffer.COLOR_GRAY_4)
                         end
                     end
