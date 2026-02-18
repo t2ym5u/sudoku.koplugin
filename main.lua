@@ -568,6 +568,18 @@ function SudokuBoard:getRemainingCells()
     return remaining
 end
 
+function SudokuBoard:countDigit(digit)
+    local count = 0
+    for r = 1, 9 do
+        for c = 1, 9 do
+            if self:getWorkingValue(r, c) == digit then
+                count = count + 1
+            end
+        end
+    end
+    return count
+end
+
 function SudokuBoard:canUndo()
     return self.undo_stack[1] ~= nil
 end
@@ -915,6 +927,7 @@ function SudokuScreen:buildLayout()
         for _ = 1, 3 do
             local digit = value
             row[#row + 1] = {
+                id = "digit_" .. digit,
                 text = tostring(digit),
                 callback = function()
                     self:onDigit(digit)
@@ -959,6 +972,10 @@ function SudokuScreen:buildLayout()
     }
     self.note_button = keypad:getButtonById("note_button")
     self.undo_button = keypad:getButtonById("undo_button")
+    self.digit_buttons = {}
+    for d = 1, 9 do
+        self.digit_buttons[d] = keypad:getButtonById("digit_" .. d)
+    end
 
     if is_landscape then
         local right_panel = VerticalGroup:new{
@@ -993,6 +1010,7 @@ function SudokuScreen:buildLayout()
     self:ensureShowButtonState()
     self:updateNoteButton()
     self:updateUndoButton()
+    self:updateDigitButtons()
     self:updateDifficultyButton()
     self:updateStatus()
 end
@@ -1014,6 +1032,18 @@ function SudokuScreen:updateUndoButton()
         return
     end
     self.undo_button:enableDisable(self.board:canUndo())
+end
+
+function SudokuScreen:updateDigitButtons()
+    if not self.digit_buttons then
+        return
+    end
+    for d = 1, 9 do
+        local btn = self.digit_buttons[d]
+        if btn then
+            btn:enableDisable(self.board:countDigit(d) < 9)
+        end
+    end
 end
 
 function SudokuScreen:toggleNoteMode()
@@ -1043,6 +1073,7 @@ function SudokuScreen:openDifficultyMenu()
             self.plugin:saveState()
             self.board_widget:refresh()
             self:ensureShowButtonState()
+            self:updateDigitButtons()
             self:updateStatus(T(_("Started a %1 game."), DIFFICULTY_LABELS[level] or level))
         else
             self:updateStatus()
@@ -1120,6 +1151,7 @@ function SudokuScreen:onDigit(value)
     self:updateStatus()
     self.plugin:saveState()
     self:updateUndoButton()
+    self:updateDigitButtons()
     if self.board:isSolved() then
         UIManager:show(InfoMessage:new{ text = _("Puzzle complete!"), timeout = 4 })
     end
@@ -1137,6 +1169,7 @@ function SudokuScreen:onErase()
     self:updateStatus()
     self.plugin:saveState()
     self:updateUndoButton()
+    self:updateDigitButtons()
 end
 
 function SudokuScreen:onNewGame()
@@ -1145,6 +1178,7 @@ function SudokuScreen:onNewGame()
     self.board_widget:refresh()
     self:ensureShowButtonState()
     self:updateUndoButton()
+    self:updateDigitButtons()
     self:updateStatus(_("Started a new game."))
 end
 
@@ -1193,6 +1227,7 @@ function SudokuScreen:onUndo()
     self:updateStatus(_("Last move undone."))
     self.plugin:saveState()
     self:updateUndoButton()
+    self:updateDigitButtons()
 end
 
 local Sudoku = WidgetContainer:extend{
