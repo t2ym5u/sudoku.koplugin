@@ -13,6 +13,8 @@ local Size = require("ui/size")
 local TextWidget = require("ui/widget/textwidget")
 local Menu = require("ui/widget/menu")
 local UIManager = require("ui/uimanager")
+local HorizontalGroup = require("ui/widget/horizontalgroup")
+local HorizontalSpan = require("ui/widget/horizontalspan")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -848,14 +850,28 @@ function SudokuScreen:paintTo(bb, x, y)
 end
 
 function SudokuScreen:buildLayout()
+    local is_landscape = Screen:getWidth() > Screen:getHeight()
+    local sw = Screen:getWidth()
+
     local board_frame = FrameContainer:new{
         padding = Size.padding.large,
         margin = Size.margin.default,
         self.board_widget,
     }
+
+    -- In landscape, buttons go on the right; compute available width for that panel.
+    local board_frame_size = self.board_widget.size + (Size.padding.large + Size.margin.default) * 2
+    local right_panel_width = sw - board_frame_size - Size.span.horizontal_large
+    local button_width = is_landscape
+        and math.max(right_panel_width - Size.span.horizontal_large, 100)
+        or math.floor(sw * 0.9)
+    local keypad_width = is_landscape
+        and button_width
+        or math.floor(sw * 0.75)
+
     local top_buttons = ButtonTable:new{
         shrink_unneeded_width = true,
-        width = math.floor(Screen:getWidth() * 0.9),
+        width = button_width,
         buttons = {
             {
                 {
@@ -937,24 +953,42 @@ function SudokuScreen:buildLayout()
         },
     }
     local keypad = ButtonTable:new{
-        width = math.floor(Screen:getWidth() * 0.75),
+        width = keypad_width,
         shrink_unneeded_width = true,
         buttons = keypad_rows,
     }
     self.note_button = keypad:getButtonById("note_button")
     self.undo_button = keypad:getButtonById("undo_button")
-    self.layout = VerticalGroup:new{
-        align = "center",
-        VerticalSpan:new{ width = Size.span.vertical_large },
-        top_buttons,
-        VerticalSpan:new{ width = Size.span.vertical_large },
-        board_frame,
-        VerticalSpan:new{ width = Size.span.vertical_large },
-        self.status_text,
-        VerticalSpan:new{ width = Size.span.vertical_large },
-        keypad,
-        VerticalSpan:new{ width = Size.span.vertical_large },
-    }
+
+    if is_landscape then
+        local right_panel = VerticalGroup:new{
+            align = "center",
+            top_buttons,
+            VerticalSpan:new{ width = Size.span.vertical_large },
+            self.status_text,
+            VerticalSpan:new{ width = Size.span.vertical_large },
+            keypad,
+        }
+        self.layout = HorizontalGroup:new{
+            align = "center",
+            board_frame,
+            HorizontalSpan:new{ width = Size.span.horizontal_large },
+            right_panel,
+        }
+    else
+        self.layout = VerticalGroup:new{
+            align = "center",
+            VerticalSpan:new{ width = Size.span.vertical_large },
+            top_buttons,
+            VerticalSpan:new{ width = Size.span.vertical_large },
+            board_frame,
+            VerticalSpan:new{ width = Size.span.vertical_large },
+            self.status_text,
+            VerticalSpan:new{ width = Size.span.vertical_large },
+            keypad,
+            VerticalSpan:new{ width = Size.span.vertical_large },
+        }
+    end
     self[1] = self.layout
     self:ensureShowButtonState()
     self:updateNoteButton()
