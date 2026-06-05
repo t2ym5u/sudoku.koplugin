@@ -1,6 +1,15 @@
-local grid_utils       = require("grid_utils")
-local puzzle_generator = require("puzzle_generator")
-local BaseBoard        = require("base_board")
+local _dir = debug.getinfo(1, "S").source:sub(2):match("(.*[/\\])") or "./"
+local function lrequire_common(name)
+    local key = _dir .. "common/" .. name
+    if not package.loaded[key] then
+        package.loaded[key] = assert(loadfile(_dir .. "common/" .. name .. ".lua"))()
+    end
+    return package.loaded[key]
+end
+
+local grid_utils       = lrequire_common("grid_utils")
+local puzzle_generator = lrequire_common("puzzle_generator")
+local BaseBoard        = lrequire_common("base_board")
 
 local emptyGrid        = grid_utils.emptyGrid
 local emptyNotes       = grid_utils.emptyNotes
