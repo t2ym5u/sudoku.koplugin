@@ -2,7 +2,16 @@ local Blitbuffer    = require("ffi/blitbuffer")
 local Geom          = require("ui/geometry")
 local RenderText    = require("ui/rendertext")
 
-local common           = require("base_board_widget")
+local _dir = debug.getinfo(1, "S").source:sub(2):match("(.*[/\\])") or "./"
+local function lrequire_common(name)
+    local key = _dir .. "common/" .. name
+    if not package.loaded[key] then
+        package.loaded[key] = assert(loadfile(_dir .. "common/" .. name .. ".lua"))()
+    end
+    return package.loaded[key]
+end
+
+local common           = lrequire_common("base_board_widget")
 local BaseBoardWidget  = common.BaseBoardWidget
 local drawLine         = common.drawLine
 local drawDiagonalLine = common.drawDiagonalLine

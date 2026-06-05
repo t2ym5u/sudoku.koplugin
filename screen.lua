@@ -1,3 +1,19 @@
+local _dir = debug.getinfo(1, "S").source:sub(2):match("(.*[/\\])") or "./"
+local function lrequire(name)
+    local key = _dir .. name
+    if not package.loaded[key] then
+        package.loaded[key] = assert(loadfile(_dir .. name .. ".lua"))()
+    end
+    return package.loaded[key]
+end
+local function lrequire_common(name)
+    local key = _dir .. "common/" .. name
+    if not package.loaded[key] then
+        package.loaded[key] = assert(loadfile(_dir .. "common/" .. name .. ".lua"))()
+    end
+    return package.loaded[key]
+end
+
 local ButtonTable = require("ui/widget/buttontable")
 local Device      = require("device")
 local FrameContainer = require("ui/widget/container/framecontainer")
@@ -11,10 +27,10 @@ local VerticalSpan  = require("ui/widget/verticalspan")
 local _           = require("gettext")
 local T           = require("ffi/util").template
 
-local board_module      = require("board")
-local SudokuBoardWidget = require("board_widget")
+local board_module      = lrequire("board")
+local SudokuBoardWidget = lrequire("board_widget")
 
-local common          = require("base_screen")
+local common          = lrequire_common("base_screen")
 local BaseScreen      = common.BaseScreen
 local DIFFICULTY_ORDER  = common.DIFFICULTY_ORDER
 local DIFFICULTY_LABELS = common.DIFFICULTY_LABELS
@@ -33,13 +49,28 @@ end
 local SudokuScreen = BaseScreen:extend{}
 
 function SudokuScreen:buildLayout()
-    self.board_widget = SudokuBoardWidget:new{
-        board              = self.board,
-        onSelectionChanged = function() self:updateStatus() end,
-    }
-
     local is_landscape = DeviceScreen:getWidth() > DeviceScreen:getHeight()
     local sw = DeviceScreen:getWidth()
+    local sh = DeviceScreen:getHeight()
+
+    -- In portrait mode, cap the board size so that the full layout (buttons +
+    -- board + status + keypad) fits within the screen height.
+    local max_board_size
+    if not is_landscape then
+        local btn_row_h    = Size.item.height_default + 2 * Size.padding.buttontable
+        local frame_h      = (Size.padding.large + Size.margin.default) * 2
+        local span         = Size.span.vertical_large
+        local keypad_rows  = self.board.box_rows + 1   -- digit rows + utility row
+        local status_h     = 2 * Size.item.height_default  -- budget for 2 status lines
+        local non_board_h  = 5 * span + btn_row_h + status_h + keypad_rows * btn_row_h + frame_h
+        max_board_size = sh - non_board_h
+    end
+
+    self.board_widget = SudokuBoardWidget:new{
+        board              = self.board,
+        max_size           = max_board_size,
+        onSelectionChanged = function() self:updateStatus() end,
+    }
 
     local board_frame = FrameContainer:new{
         padding = Size.padding.large,
@@ -48,9 +79,9 @@ function SudokuScreen:buildLayout()
     }
 
     local board_frame_size  = self.board_widget.size + (Size.padding.large + Size.margin.default) * 2
-    local right_panel_width = sw - board_frame_size - Size.span.horizontal_large
+    local right_panel_width = sw - board_frame_size - Size.span.horizontal_default
     local button_width = is_landscape
-        and math.max(right_panel_width - Size.span.horizontal_large, 100)
+        and math.max(right_panel_width - Size.span.horizontal_default, 100)
         or  math.floor(sw * 0.9)
     local keypad_width = is_landscape and button_width or math.floor(sw * 0.75)
 
@@ -127,7 +158,7 @@ function SudokuScreen:buildLayout()
         self.layout = HorizontalGroup:new{
             align = "center",
             board_frame,
-            HorizontalSpan:new{ width = Size.span.horizontal_large },
+            HorizontalSpan:new{ width = Size.span.horizontal_default },
             right_panel,
         }
     else
