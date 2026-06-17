@@ -46,6 +46,29 @@ end
 -- SudokuScreen
 -- ---------------------------------------------------------------------------
 
+local GAME_RULES_EN = _([[
+Sudoku — Rules
+
+Fill the 9×9 grid with the digits 1–9.
+
+Each row, each column, and each of the nine 3×3 boxes must contain every digit from 1 to 9 exactly once.
+
+Given digits are fixed and cannot be changed.
+
+Tip: use Note mode to pencil in candidate digits before committing.]])
+
+local GAME_RULES_FR = [[
+Sudoku — Règles
+
+Remplissez la grille 9×9 avec les chiffres de 1 à 9.
+
+Chaque ligne, chaque colonne et chacun des neuf carrés 3×3 doit contenir tous les chiffres de 1 à 9 exactement une fois.
+
+Les chiffres donnés sont fixes et ne peuvent pas être modifiés.
+
+Conseil : utilisez le mode Note pour inscrire en petit les chiffres candidats avant de vous décider.
+]]
+
 local SudokuScreen = BaseScreen:extend{}
 
 function SudokuScreen:buildLayout()
@@ -98,6 +121,7 @@ function SudokuScreen:buildLayout()
                   callback = function() self:openDifficultyMenu() end },
                 { id = "show_result",     text = _("Show result"),
                   callback = function() self:toggleSolution() end },
+                self:makeRulesButtonConfig(GAME_RULES_EN, GAME_RULES_FR),
                 { text = _("Close"),      callback = function()
                     self:onClose()
                     UIManager:close(self)

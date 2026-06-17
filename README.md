@@ -2,6 +2,15 @@
 
 A Sudoku plugin for [KOReader](https://github.com/koreader/koreader).
 
+
+## Screenshot
+
+*(Screenshot to be added.)*
+
+## Rules
+
+Fill the 9×9 grid with digits 1–9. Each row, each column, and each 3×3 box must contain every digit exactly once. Given digits are fixed.
+
 ## Features
 
 - **Five grid sizes** — 4×4, 6×6, 9×9, 12×12 and 16×16 (digits 10–16 shown as A–G)
@@ -35,6 +44,7 @@ A Sudoku plugin for [KOReader](https://github.com/koreader/koreader).
 | New game | Tap **New game** |
 | Change grid size | Tap **Grid** |
 | Change difficulty | Tap **Diff** |
+| Show rules | Tap **Rules** |
 
 ## License
 
