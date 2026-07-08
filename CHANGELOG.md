@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.2] - 2026-07-08
+
+### Added
+- FR/EN translation via shared `i18n` module: buttons, menus, and status messages
+  now appear in French when KOReader language is set to French.
+
 ## [2.0.0] - 2026-02-18
 
 ### Added
