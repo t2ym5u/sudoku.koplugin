@@ -8,7 +8,9 @@ local InputContainer = require("ui/widget/container/inputcontainer")
 local TextViewer     = require("ui/widget/textviewer")
 local TextWidget     = require("ui/widget/textwidget")
 local UIManager      = require("ui/uimanager")
-local _              = require("gettext")
+local VerticalGroup  = require("ui/widget/verticalgroup")
+local VerticalSpan   = require("ui/widget/verticalspan")
+local _              = require("i18n")
 local T              = require("ffi/util").template
 
 local DeviceScreen = Device.screen
@@ -42,11 +44,9 @@ function BaseScreen:init()
     self.vertical_align    = "center"
     self.note_mode         = false
     self.undo_button       = nil
-
     if Device:hasKeys() then
-        self.key_events = { Close = { { Device.input.group.Back } } }
+        self.key_events.Close = { { Device.input.group.Back } }
     end
-
     self.status_text = TextWidget:new{
         text = _("Tap a cell, then pick a number."),
         face = Font:getFace("smallinfofont"),
@@ -65,7 +65,7 @@ function BaseScreen:paintTo(bb, x, y)
     local offset_x = x + math.floor((self.dimen.w - content_size.w) / 2)
     local offset_y = y
     if self.vertical_align == "center" then
-        offset_y = offset_y + math.max(0, math.floor((self.dimen.h - content_size.h) / 2))
+        offset_y = offset_y + math.floor((self.dimen.h - content_size.h) / 2)
     end
     self.layout:paintTo(bb, offset_x, offset_y)
 end
@@ -202,11 +202,22 @@ function BaseScreen:checkProgress()
     end
 end
 
-function BaseScreen:onClose()
+function BaseScreen:closeScreen()
     self.plugin:saveState()
     self.plugin:onScreenClosed()
     UIManager:close(self)
     UIManager:setDirty(nil, "full")
+end
+
+function BaseScreen:onClose()
+    self:closeScreen()
+end
+
+function BaseScreen:makeCloseButtonConfig()
+    return {
+        text     = _("Close"),
+        callback = function() self:closeScreen() end,
+    }
 end
 
 function BaseScreen:onUndo()
@@ -223,14 +234,25 @@ function BaseScreen:onUndo()
 end
 
 -- ---------------------------------------------------------------------------
--- Close button config (for use in ButtonTable rows)
+-- Fixed portrait layout helper
 -- ---------------------------------------------------------------------------
 
-function BaseScreen:makeCloseButtonConfig()
-    return {
-        text     = _("Close"),
-        callback = function() self:onClose() end,
-    }
+function BaseScreen:buildPortraitLayout(header, content, footer)
+    local sh       = self.dimen.h
+    local header_h = header  and header:getSize().h  or 0
+    local content_h= content and content:getSize().h or 0
+    local footer_h = footer  and footer:getSize().h  or 0
+    local remaining = math.max(0, sh - header_h - content_h - footer_h)
+    local top_gap   = math.floor(remaining / 2)
+    local bot_gap   = remaining - top_gap
+    local items = { align = "center" }
+    if header  then items[#items+1] = header  end
+    items[#items+1] = VerticalSpan:new{ width = top_gap }
+    if content then items[#items+1] = content end
+    items[#items+1] = VerticalSpan:new{ width = bot_gap }
+    if footer  then items[#items+1] = footer  end
+    self.layout = VerticalGroup:new(items)
+    self[1] = self.layout
 end
 
 -- ---------------------------------------------------------------------------
@@ -250,8 +272,7 @@ function BaseScreen:makeRulesButtonConfig(en_text, fr_text)
     return {
         text     = _("Rules"),
         callback = function()
-            local lang = (G_reader_settings and G_reader_settings:readSetting("language") or "en"):sub(1, 2)
-            self:showRules((lang == "fr" and fr_text) or en_text)
+            self:showRules((_.lang() == "fr" and fr_text) or en_text)
         end,
     }
 end
