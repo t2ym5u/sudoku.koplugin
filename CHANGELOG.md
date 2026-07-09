@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.0.2] - 2026-07-08
+## [2.1.0] - 2026-07-08
 
 ### Added
 - FR/EN translation via shared `i18n` module: buttons, menus, and status messages
