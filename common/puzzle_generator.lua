@@ -190,7 +190,7 @@ end
 local function createPuzzle(solved_grid, difficulty, n, box_rows, box_cols)
     local puzzle  = copyGrid(solved_grid, n)
     local total   = n * n
-    local ratios  = { easy = 0.43, medium = 0.56, hard = 0.65 }
+    local ratios  = { easy = 0.43, medium = 0.56, hard = 0.65, expert = 0.72 }
     local ratio   = ratios[difficulty] or ratios.medium
     local removals = math.floor(total * ratio)
 
