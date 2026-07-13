@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - 2026-07-13
+
+### Added
+- "Expert" difficulty tier (~23-25 givens on 9×9), scaled proportionally for
+  other grid sizes.
+
 ## [2.1.0] - 2026-07-08
 
 ### Added
