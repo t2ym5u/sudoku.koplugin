@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.1] - 2026-07-15
+
+### Fixed
+- `require("grid_utils")` collided with the unrelated `grid_utils` module
+  used by other game plugins sharing the same Lua VM, which could make the
+  plugin fail to load depending on plugin load order. Renamed the shared
+  module to `sudoku_grid_utils`.
+
 ## [2.2.0] - 2026-07-13
 
 ### Added
