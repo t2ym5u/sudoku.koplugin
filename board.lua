@@ -7,7 +7,7 @@ local function lrequire_common(name)
     return package.loaded[key]
 end
 
-local grid_utils       = lrequire_common("grid_utils")
+local grid_utils       = lrequire_common("sudoku_grid_utils")
 local puzzle_generator = lrequire_common("puzzle_generator")
 local BaseBoard        = lrequire_common("base_board")
 
