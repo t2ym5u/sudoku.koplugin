@@ -108,27 +108,17 @@ function SudokuScreen:buildLayout()
         or  math.floor(sw * 0.9)
     local keypad_width = is_landscape and button_width or math.floor(sw * 0.75)
 
-    -- Top action bar: [New game] [Grid] [Difficulty] [Show result] [Close]
-    local top_buttons = ButtonTable:new{
-        shrink_unneeded_width = true,
-        width   = button_width,
-        buttons = {
-            {
-                { text = _("New game"),   callback = function() self:onNewGame() end },
-                { id = "grid_button",     text = self:getGridButtonText(),
-                  callback = function() self:openGridMenu() end },
-                { id = "difficulty_button", text = self:getDifficultyButtonText(),
-                  callback = function() self:openDifficultyMenu() end },
-                { id = "show_result",     text = _("Show result"),
-                  callback = function() self:toggleSolution() end },
-                self:makeRulesButtonConfig(GAME_RULES_EN, GAME_RULES_FR),
-                self:makeCloseButtonConfig(),
-            },
-        },
-    }
-    self.show_result_button = top_buttons:getButtonById("show_result")
-    self.difficulty_button  = top_buttons:getButtonById("difficulty_button")
-    self.grid_button        = top_buttons:getButtonById("grid_button")
+    -- Title bar with Options menu
+    local title_bar = self:buildTitleBar(_("Sudoku"), function()
+        return {
+            { text = _("New game"),                    callback = function() self:onNewGame() end },
+            { text = self:getGridButtonText(),         callback = function() self:openGridMenu() end },
+            { text = self:getDifficultyButtonText(),   callback = function() self:openDifficultyMenu() end },
+            { text = self.board:isShowingSolution() and _("Hide result") or _("Show result"),
+              callback = function() self:toggleSolution() end },
+            self:makeRulesButtonConfig(GAME_RULES_EN, GAME_RULES_FR),
+        }
+    end)
 
     -- Digit keypad
     local n        = self.board.n
@@ -169,18 +159,17 @@ function SudokuScreen:buildLayout()
     if is_landscape then
         local right_panel = VerticalGroup:new{
             align = "center",
-            top_buttons,
-            VerticalSpan:new{ width = Size.span.vertical_large },
             self.status_text,
             VerticalSpan:new{ width = Size.span.vertical_large },
             keypad,
         }
-        self.layout = HorizontalGroup:new{
+        local content = HorizontalGroup:new{
             align = "center",
             board_frame,
             HorizontalSpan:new{ width = Size.span.horizontal_default },
             right_panel,
         }
+        self:buildLandscapeLayout(title_bar, content)
     else
         local content = VerticalGroup:new{
             align = "center",
@@ -188,9 +177,8 @@ function SudokuScreen:buildLayout()
             VerticalSpan:new{ width = Size.span.vertical_large },
             self.status_text,
         }
-        self:buildPortraitLayout(top_buttons, content, keypad)
+        self:buildPortraitLayout(title_bar, content, keypad)
     end
-    self[1] = self.layout
     self:ensureShowButtonState()
     self:updateNoteButton()
     self:updateUndoButton()
