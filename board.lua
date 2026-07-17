@@ -90,6 +90,7 @@ function SudokuBoard:serialize()
         selected        = { row = self.selected.row, col = self.selected.col },
         difficulty      = self.difficulty,
         reveal_solution = self.reveal_solution,
+        daily_seed      = self.daily_seed,
     }
 end
 
@@ -119,15 +120,21 @@ function SudokuBoard:load(state)
         self.selected = { row = 1, col = 1 }
     end
     self.reveal_solution = state.reveal_solution or false
+    self.daily_seed       = state.daily_seed
     self:recalcConflicts()
     return true
 end
 
-function SudokuBoard:generate(difficulty)
+-- rng (optional): a DailySeed.rng()-style function() -> [0,1) closure, used
+-- for reproducible "puzzle of the day" generation. Defaults to nil, which
+-- makes generateSolvedBoard/createPuzzle fall back to math.random -- normal
+-- "New game" play is unaffected.
+function SudokuBoard:generate(difficulty, rng)
     self.difficulty = difficulty or self.difficulty or DEFAULT_DIFFICULTY
     local n, box_rows, box_cols = self.n, self.box_rows, self.box_cols
-    local solution = generateSolvedBoard(n, box_rows, box_cols)
-    local puzzle   = createPuzzle(solution, self.difficulty, n, box_rows, box_cols)
+    local randInt = rng and function(i) return math.floor(rng() * i) + 1 end or nil
+    local solution = generateSolvedBoard(n, box_rows, box_cols, randInt)
+    local puzzle   = createPuzzle(solution, self.difficulty, n, box_rows, box_cols, randInt)
     self.puzzle          = puzzle
     self.solution        = solution
     self.user            = emptyGrid(n)
