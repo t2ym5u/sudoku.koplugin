@@ -24,7 +24,7 @@ local Size        = require("ui/size")
 local UIManager   = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan  = require("ui/widget/verticalspan")
-local _           = require("i18n")
+local _           = require("gettext")
 local T           = require("ffi/util").template
 
 local board_module      = lrequire("board")
