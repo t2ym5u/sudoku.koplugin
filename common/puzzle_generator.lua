@@ -8,11 +8,16 @@ local band   = bit.band
 local bnot   = bit.bnot
 local lshift = bit.lshift
 
-local function shuffledDigits(n)
+-- randInt(i) -> integer in [1, i], inclusive uniform. Defaults to
+-- math.random so normal play is unaffected; callers pass a seeded
+-- generator (see game-common/daily_seed.lua) for reproducible "puzzle of
+-- the day" generation without touching global RNG state.
+local function shuffledDigits(n, randInt)
+    randInt = randInt or math.random
     local digits = {}
     for i = 1, n do digits[i] = i end
     for i = n, 2, -1 do
-        local j = math.random(i)
+        local j = randInt(i)
         digits[i], digits[j] = digits[j], digits[i]
     end
     return digits
@@ -23,7 +28,8 @@ end
 --
 -- Formula: grid[r][c] = (box_cols*(r-1 mod box_rows) + floor((r-1)/box_rows) + (c-1)) mod n + 1
 -- This is a valid Latin square that also satisfies all box constraints.
-local function generateSolvedBoard(n, box_rows, box_cols)
+local function generateSolvedBoard(n, box_rows, box_cols, randInt)
+    randInt = randInt or math.random
     local num_bands  = n / box_rows   -- number of row bands
     local num_stacks = n / box_cols   -- number of col stacks
 
@@ -41,7 +47,7 @@ local function generateSolvedBoard(n, box_rows, box_cols)
     local band_ord = {}
     for i = 1, num_bands do band_ord[i] = i end
     for i = num_bands, 2, -1 do
-        local j = math.random(i)
+        local j = randInt(i)
         band_ord[i], band_ord[j] = band_ord[j], band_ord[i]
     end
 
@@ -51,7 +57,7 @@ local function generateSolvedBoard(n, box_rows, box_cols)
         local w = {}
         for i = 1, box_rows do w[i] = i end
         for i = box_rows, 2, -1 do
-            local j = math.random(i)
+            local j = randInt(i)
             w[i], w[j] = w[j], w[i]
         end
         local base = (band_ord[bi] - 1) * box_rows
@@ -64,7 +70,7 @@ local function generateSolvedBoard(n, box_rows, box_cols)
     local stack_ord = {}
     for i = 1, num_stacks do stack_ord[i] = i end
     for i = num_stacks, 2, -1 do
-        local j = math.random(i)
+        local j = randInt(i)
         stack_ord[i], stack_ord[j] = stack_ord[j], stack_ord[i]
     end
 
@@ -74,7 +80,7 @@ local function generateSolvedBoard(n, box_rows, box_cols)
         local w = {}
         for i = 1, box_cols do w[i] = i end
         for i = box_cols, 2, -1 do
-            local j = math.random(i)
+            local j = randInt(i)
             w[i], w[j] = w[j], w[i]
         end
         local base = (stack_ord[si] - 1) * box_cols
@@ -84,7 +90,7 @@ local function generateSolvedBoard(n, box_rows, box_cols)
     end
 
     -- Step 6: random digit relabelling
-    local digit_map = shuffledDigits(n)
+    local digit_map = shuffledDigits(n, randInt)
 
     -- Step 7: apply all permutations
     local out = emptyGrid(n)
@@ -187,7 +193,8 @@ local function countSolutions(grid, limit, n, box_rows, box_cols)
 end
 
 -- countSolutions does not modify the grid, so no copy is needed inside the loop.
-local function createPuzzle(solved_grid, difficulty, n, box_rows, box_cols)
+local function createPuzzle(solved_grid, difficulty, n, box_rows, box_cols, randInt)
+    randInt = randInt or math.random
     local puzzle  = copyGrid(solved_grid, n)
     local total   = n * n
     local ratios  = { easy = 0.43, medium = 0.56, hard = 0.65, expert = 0.72 }
@@ -199,7 +206,7 @@ local function createPuzzle(solved_grid, difficulty, n, box_rows, box_cols)
         for c = 1, n do cells[#cells + 1] = { r = r, c = c } end
     end
     for i = #cells, 2, -1 do
-        local j = math.random(i)
+        local j = randInt(i)
         cells[i], cells[j] = cells[j], cells[i]
     end
 

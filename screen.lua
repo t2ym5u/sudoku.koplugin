@@ -112,6 +112,11 @@ function SudokuScreen:buildLayout()
     local title_bar = self:buildTitleBar(_("Sudoku"), function()
         return {
             { text = _("New game"),                    callback = function() self:onNewGame() end },
+            { text = self.plugin:isDailyCompletedToday() and _("Daily Challenge ✓") or _("Daily Challenge"),
+              callback = function()
+                  self:closeScreen()
+                  self.plugin:showDailyChallenge()
+              end },
             { text = self:getGridButtonText(),         callback = function() self:openGridMenu() end },
             { text = self:getDifficultyButtonText(),   callback = function() self:openDifficultyMenu() end },
             { text = self.board:isShowingSolution() and _("Hide result") or _("Show result"),
