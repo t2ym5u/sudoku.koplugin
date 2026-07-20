@@ -13,7 +13,9 @@ local DataStorage    = require("datastorage")
 local LuaSettings    = require("luasettings")
 local UIManager      = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
-local _              = require("gettext")
+local _              = require("i18n")
+
+require("i18n").extend(lrequire("i18n_fr"))
 
 local board_module       = lrequire("board")
 local SudokuBoard        = board_module.SudokuBoard
