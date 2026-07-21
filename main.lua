@@ -24,6 +24,7 @@ local DEFAULT_DIFFICULTY = board_module.DEFAULT_DIFFICULTY
 local DailySeed = lrequire("daily_seed")
 
 local SudokuScreen = lrequire("screen")
+local generateWithProgress = lrequire("common/base_screen").generateWithProgress
 
 local Sudoku = WidgetContainer:extend{
     name        = "sudoku",
@@ -58,7 +59,7 @@ function Sudoku:getBoard()
         self.board = SudokuBoard:new()
         local state = self.settings:readSetting("state")
         if not self.board:load(state) then
-            self.board:generate(DEFAULT_DIFFICULTY)
+            generateWithProgress(self.board, DEFAULT_DIFFICULTY)
         end
     end
     return self.board
@@ -77,7 +78,7 @@ function Sudoku:getDailyBoard()
         self.daily_board = SudokuBoard:new()
         local loaded = state and self.daily_board:load(state)
         if not (loaded and self.daily_board.daily_seed == today) then
-            self.daily_board:generate(DEFAULT_DIFFICULTY, DailySeed.rng(today))
+            generateWithProgress(self.daily_board, DEFAULT_DIFFICULTY, DailySeed.rng(today))
             self.daily_board.daily_seed = today
         end
     end
