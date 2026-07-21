@@ -129,12 +129,13 @@ end
 -- for reproducible "puzzle of the day" generation. Defaults to nil, which
 -- makes generateSolvedBoard/createPuzzle fall back to math.random -- normal
 -- "New game" play is unaffected.
-function SudokuBoard:generate(difficulty, rng)
+-- on_progress (optional): forwarded to createPuzzle, see puzzle_generator.lua.
+function SudokuBoard:generate(difficulty, rng, on_progress)
     self.difficulty = difficulty or self.difficulty or DEFAULT_DIFFICULTY
     local n, box_rows, box_cols = self.n, self.box_rows, self.box_cols
     local randInt = rng and function(i) return math.floor(rng() * i) + 1 end or nil
     local solution = generateSolvedBoard(n, box_rows, box_cols, randInt)
-    local puzzle   = createPuzzle(solution, self.difficulty, n, box_rows, box_cols, randInt)
+    local puzzle   = createPuzzle(solution, self.difficulty, n, box_rows, box_cols, randInt, on_progress)
     self.puzzle          = puzzle
     self.solution        = solution
     self.user            = emptyGrid(n)

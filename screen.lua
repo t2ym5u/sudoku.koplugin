@@ -34,6 +34,7 @@ local common          = lrequire_common("base_screen")
 local BaseScreen      = common.BaseScreen
 local DIFFICULTY_ORDER  = common.DIFFICULTY_ORDER
 local DIFFICULTY_LABELS = common.DIFFICULTY_LABELS
+local generateWithProgress = common.generateWithProgress
 
 local DeviceScreen = Device.screen
 
@@ -219,7 +220,7 @@ function SudokuScreen:openDifficultyMenu()
     local menu
     local function selectDifficulty(level)
         if level ~= self.board.difficulty then
-            self.board:generate(level)
+            generateWithProgress(self.board, level)
             self.plugin:saveState()
             self.board_widget:refresh()
             self:ensureShowButtonState()
@@ -285,7 +286,7 @@ function SudokuScreen:onGridChange(grid_id)
     local prev_difficulty = self.board.difficulty
     local cfg  = board_module.getGridConfig(grid_id)
     self.board = board_module.SudokuBoard:new(cfg)
-    self.board:generate(prev_difficulty)
+    generateWithProgress(self.board, prev_difficulty)
     self.plugin.board = self.board
     self.plugin:saveState()
     self:buildLayout()
