@@ -193,7 +193,10 @@ local function countSolutions(grid, limit, n, box_rows, box_cols)
 end
 
 -- countSolutions does not modify the grid, so no copy is needed inside the loop.
-local function createPuzzle(solved_grid, difficulty, n, box_rows, box_cols, randInt)
+-- on_progress (optional): called after each cell examined as
+-- on_progress(removed, removals), so callers can drive a real progress bar
+-- off actual digging work instead of a fake timer.
+local function createPuzzle(solved_grid, difficulty, n, box_rows, box_cols, randInt, on_progress)
     randInt = randInt or math.random
     local puzzle  = copyGrid(solved_grid, n)
     local total   = n * n
@@ -223,6 +226,7 @@ local function createPuzzle(solved_grid, difficulty, n, box_rows, box_cols, rand
                 puzzle[row][col] = backup
             end
         end
+        if on_progress then on_progress(removed, removals) end
     end
     return puzzle
 end
