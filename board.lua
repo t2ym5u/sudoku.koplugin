@@ -125,17 +125,17 @@ function SudokuBoard:load(state)
     return true
 end
 
--- rng (optional): a DailySeed.rng()-style function() -> [0,1) closure, used
--- for reproducible "puzzle of the day" generation. Defaults to nil, which
--- makes generateSolvedBoard/createPuzzle fall back to math.random -- normal
--- "New game" play is unaffected.
+-- randInt(i) -> [1,i] (optional): base_screen.lua's generateWithProgress
+-- converts the DailySeed.rng()-style function() -> [0,1) closure into this
+-- shape before calling :generate(), for reproducible "puzzle of the day"
+-- generation. Defaults to nil, which makes generateSolvedBoard/createPuzzle
+-- fall back to math.random -- normal "New game" play is unaffected.
 -- on_progress (optional): forwarded to createPuzzle, see puzzle_generator.lua.
-function SudokuBoard:generate(difficulty, rng, on_progress)
+function SudokuBoard:generate(difficulty, randInt, on_progress)
     self.difficulty = difficulty or self.difficulty or DEFAULT_DIFFICULTY
     local n, box_rows, box_cols = self.n, self.box_rows, self.box_cols
-    local randInt = rng and function(i) return math.floor(rng() * i) + 1 end or nil
-    local solution = generateSolvedBoard(n, box_rows, box_cols, randInt)
-    local puzzle   = createPuzzle(solution, self.difficulty, n, box_rows, box_cols, randInt, on_progress)
+    local solution = generateSolvedBoard(n, box_rows, box_cols, nil, randInt)
+    local puzzle   = createPuzzle(solution, self.difficulty, n, box_rows, box_cols, nil, randInt, on_progress)
     self.puzzle          = puzzle
     self.solution        = solution
     self.user            = emptyGrid(n)
