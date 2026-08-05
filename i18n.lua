@@ -26,37 +26,37 @@ local function lang()
 end
 
 local S = {
-    ["Close"]       = { fr = "Fermer" },
-    ["Rules"]       = { fr = "Règles" },
+    ["Close"]       = { fr = "Fermer", es = "Cerrar", de = "Schließen" },
+    ["Rules"]       = { fr = "Règles", es = "Reglas", de = "Regeln" },
 
-    ["Easy"]    = { fr = "Facile" },
-    ["Medium"]  = { fr = "Moyen" },
-    ["Hard"]    = { fr = "Difficile" },
-    ["Expert"]  = { fr = "Expert" },
+    ["Easy"]    = { fr = "Facile", es = "Fácil", de = "Leicht" },
+    ["Medium"]  = { fr = "Moyen", es = "Medio", de = "Mittel" },
+    ["Hard"]    = { fr = "Difficile", es = "Difícil", de = "Schwer" },
+    ["Expert"]  = { fr = "Expert", es = "Experto", de = "Experte" },
 
-    ["Note: On"]              = { fr = "Notes : actif" },
-    ["Note: Off"]             = { fr = "Notes : inactif" },
-    ["Note mode enabled."]    = { fr = "Mode notes activé." },
-    ["Note mode disabled."]   = { fr = "Mode notes désactivé." },
+    ["Note: On"]              = { fr = "Notes : actif", es = "Notas: activadas", de = "Notizen: an" },
+    ["Note: Off"]             = { fr = "Notes : inactif", es = "Notas: desactivadas", de = "Notizen: aus" },
+    ["Note mode enabled."]    = { fr = "Mode notes activé.", es = "Modo de notas activado.", de = "Notizmodus aktiviert." },
+    ["Note mode disabled."]   = { fr = "Mode notes désactivé.", es = "Modo de notas desactivado.", de = "Notizmodus deaktiviert." },
 
-    ["Show result"]  = { fr = "Voir la solution" },
-    ["Hide result"]  = { fr = "Masquer la solution" },
-    ["Showing the solution."]              = { fr = "Affichage de la solution." },
-    ["Hide result to keep playing."]       = { fr = "Masquez la solution pour continuer à jouer." },
+    ["Show result"]  = { fr = "Voir la solution", es = "Ver la solución", de = "Lösung anzeigen" },
+    ["Hide result"]  = { fr = "Masquer la solution", es = "Ocultar la solución", de = "Lösung ausblenden" },
+    ["Showing the solution."]              = { fr = "Affichage de la solution.", es = "Mostrando la solución.", de = "Lösung wird angezeigt." },
+    ["Hide result to keep playing."]       = { fr = "Masquez la solution pour continuer à jouer.", es = "Oculte la solución para seguir jugando.", de = "Lösung ausblenden, um weiterzuspielen." },
 
-    ["Keep going!"]                     = { fr = "Continuez !" },
-    ["Everything looks good!"]          = { fr = "Tout est correct !" },
-    ["There are mistakes highlighted in red."] = { fr = "Les erreurs sont mises en évidence en rouge." },
+    ["Keep going!"]                     = { fr = "Continuez !", es = "¡Sigue así!", de = "Weiter so!" },
+    ["Everything looks good!"]          = { fr = "Tout est correct !", es = "¡Todo está correcto!", de = "Alles sieht gut aus!" },
+    ["There are mistakes highlighted in red."] = { fr = "Les erreurs sont mises en évidence en rouge.", es = "Hay errores resaltados en rojo.", de = "Es sind Fehler rot markiert." },
 
-    ["Last move undone."]  = { fr = "Dernier coup annulé." },
-    ["Nothing to undo."]   = { fr = "Rien à annuler." },
-    ["Puzzle complete!"]   = { fr = "Puzzle terminé !" },
-    ["Started a new game."] = { fr = "Nouvelle partie lancée." },
+    ["Last move undone."]  = { fr = "Dernier coup annulé.", es = "Última jugada deshecha.", de = "Letzter Zug rückgängig gemacht." },
+    ["Nothing to undo."]   = { fr = "Rien à annuler.", es = "Nada que deshacer.", de = "Nichts rückgängig zu machen." },
+    ["Puzzle complete!"]   = { fr = "Puzzle terminé !", es = "¡Puzle completado!", de = "Rätsel vollständig!" },
+    ["Started a new game."] = { fr = "Nouvelle partie lancée.", es = "Nueva partida iniciada.", de = "Neues Spiel gestartet." },
 
-    ["Clear the cell before adding notes."] = { fr = "Effacez la case avant d'ajouter des notes." },
-    ["Cell already empty."]                 = { fr = "Case déjà vide." },
-    ["This cell is fixed."]                 = { fr = "Cette case est fixe." },
-    ["Tap a cell, then pick a number."]     = { fr = "Touchez une case, puis choisissez un chiffre." },
+    ["Clear the cell before adding notes."] = { fr = "Effacez la case avant d'ajouter des notes.", es = "Borre la casilla antes de añadir notas.", de = "Zelle leeren, bevor Notizen hinzugefügt werden." },
+    ["Cell already empty."]                 = { fr = "Case déjà vide.", es = "La casilla ya está vacía.", de = "Zelle ist bereits leer." },
+    ["This cell is fixed."]                 = { fr = "Cette case est fixe.", es = "Esta casilla es fija.", de = "Diese Zelle ist vorgegeben." },
+    ["Tap a cell, then pick a number."]     = { fr = "Touchez une case, puis choisissez un chiffre.", es = "Toque una casilla y elija un número.", de = "Zelle antippen und dann eine Zahl wählen." },
 }
 
 local function translate(s)
