@@ -3,5 +3,5 @@ local _ = require("gettext")
 return {
     fullname = _([[Sudoku]]),
     description = _([[Play touch-friendly Sudoku puzzles, resume later, and reveal the solution when needed.]]),
-    version = "2.2.13",
+    version = "2.2.14",
 }
