@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.0] - 2026-09-30
+
+### Added
+- Generated puzzles are now guaranteed solvable by **pure deduction** — no
+  guessing, ever. Previously only the uniqueness of the solution was checked,
+  which is weaker: measured before the change, 35% of 9x9 "expert" grids and
+  5% of "hard" ones could only be cracked by trying a digit and backtracking.
+- Each difficulty is now a promise about technique, not just clue count:
+  Easy never needs more than naked/hidden singles, Medium adds locked
+  candidates and naked pairs, Hard adds hidden pairs and triples/quads,
+  Expert adds X-Wing, Swordfish and XY-Wing.
+- **Hint** button. Three taps: which row/column/box is about to give, then the
+  technique and digit, then the value itself (undoable like any other move).
+  Hints refuse to run while an entered value contradicts the solution, so they
+  can never reason from a false premise.
+
+### Changed
+- Large grids generate considerably faster, since a dead end is now rejected by
+  constraint propagation instead of a full backtracking search: 12x12 Expert
+  3.5s -> 0.13s, 16x16 Expert over 60s -> 1.1s per grid.
+
+### Fixed
+- The shared game UI now speaks French (and Spanish/German) again. Its strings
+  were going straight to KOReader's gettext, which knows none of them, so
+  messages like "Hide result to keep playing." stayed English whatever the
+  device language.
+
 ## [2.2.1] - 2026-07-15
 
 ### Fixed
