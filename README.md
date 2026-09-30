@@ -5,7 +5,7 @@ A Sudoku plugin for [KOReader](https://github.com/koreader/koreader).
 
 ## Screenshot
 
-*(Screenshot to be added.)*
+![Screenshot](images/sudoku.png)
 
 ## Rules
 
