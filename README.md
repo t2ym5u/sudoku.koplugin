@@ -14,11 +14,12 @@ Fill the 9×9 grid with digits 1–9. Each row, each column, and each 3×3 box m
 ## Features
 
 - **Five grid sizes** — 4×4, 6×6, 9×9, 12×12 and 16×16 (digits 10–16 shown as A–G)
-- **Three difficulty levels** — Easy, Medium, Hard
+- **Four difficulty levels** — Easy, Medium, Hard and Expert, each guaranteeing the grid is solvable by pure deduction with no guessing
 - **Landscape support** — buttons displayed to the right of the grid in landscape orientation
 - **Note mode** — pencil in candidate digits as small annotations
 - **Digit completion** — a digit button is greyed out once all its instances are placed
 - **Check** — highlights incorrect cells with a cross mark
+- **Hint** — reveals the next deduction in three taps: where to look, which technique and digit, then the value itself
 - **Reveal solution** — shows the full solution (disables editing)
 - **Undo** — step back through your moves
 - **Auto-save** — game state is saved automatically and restored on next launch
@@ -41,6 +42,7 @@ Fill the 9×9 grid with digits 1–9. Each row, each column, and each 3×3 box m
 | Toggle note mode | Tap **Note: Off / On** |
 | Undo last move | Tap **Undo** |
 | Check progress | Tap **Check** |
+| Get a hint | Tap **Hint** (tap again to go deeper) |
 | New game | Tap **New game** |
 | Change grid size | Tap **Grid** |
 | Change difficulty | Tap **Diff** |

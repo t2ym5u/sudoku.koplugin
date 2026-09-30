@@ -151,6 +151,7 @@ function SudokuScreen:buildLayout()
           callback = function() self:toggleNoteMode() end },
         { text = _("Erase"),  callback = function() self:onErase() end },
         { text = _("Check"),  callback = function() self:checkProgress() end },
+        { text = _("Hint"),   callback = function() self:onHint() end },
         { id = "undo_button", text = _("Undo"),
           callback = function() self:onUndo() end },
     }
