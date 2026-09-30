@@ -15,6 +15,7 @@ local common           = lrequire_common("base_board_widget")
 local BaseBoardWidget  = common.BaseBoardWidget
 local drawLine         = common.drawLine
 local drawDiagonalLine = common.drawDiagonalLine
+local drawConflictMark = common.drawConflictMark
 
 local Size = require("ui/size")
 
@@ -71,8 +72,9 @@ function SudokuBoardWidget:paintTo(bb, x, y)
                 else
                     color = Blitbuffer.COLOR_GRAY_2
                 end
-                if self.board:isConflict(row, col) then
-                    color = Blitbuffer.COLOR_RED
+                local is_conflict = self.board:isConflict(row, col)
+                if is_conflict then
+                    color = Blitbuffer.COLOR_BLACK
                 end
                 local text        = digitToChar(value)
                 local cell_padding = self.number_cell_padding or 0
@@ -81,7 +83,10 @@ function SudokuBoardWidget:paintTo(bb, x, y)
                 local text_w      = metrics.x
                 local baseline    = cell_y + cell_padding + math.floor((cell_inner + metrics.y_top - metrics.y_bottom) / 2)
                 local text_x      = cell_x + cell_padding + math.floor((cell_inner - text_w) / 2)
-                RenderText:renderUtf8Text(bb, text_x, baseline, self.number_face, text, true, false, color)
+                RenderText:renderUtf8Text(bb, text_x, baseline, self.number_face, text, true, is_conflict, color)
+                if is_conflict then
+                    drawConflictMark(bb, cell_x, cell_y, cell)
+                end
                 if is_given and DISPLAY_PINS_ON_GIVEN then
                     local dot     = math.max(1, math.floor(cell / 18))
                     local padding = math.max(1, math.floor(cell / 20))

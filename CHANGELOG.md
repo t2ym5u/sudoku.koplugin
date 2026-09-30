@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.2] - 2026-09-30
+
+### Fixed
+- A digit conflicting with another was meant to stand out, but was painted
+  with `Blitbuffer.COLOR_RED` -- a constant KOReader does not define. Its
+  palette is greyscale only, so the colour came out `nil` and `renderUtf8Text`
+  fell back to black: exactly the colour of a given digit. The conflict was
+  invisible. It is now signalled by shape rather than colour -- the digit turns
+  bold and gets a bar underneath it.
+
 ## [2.3.0] - 2026-09-30
 
 ### Added
