@@ -15,6 +15,12 @@ local UIManager      = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _              = require("i18n")
 
+-- Play-session stats, shared with every other game through
+-- game_stats.lua (Dashboard reads it). pcall'd: an install whose
+-- common/ predates sudoku-common 1.4.0 has no stats_exporter.lua,
+-- and a bare require would take the whole plugin down with it.
+local ok_stats, StatsExporter = pcall(require, "stats_exporter")
+
 require("i18n").extend(lrequire("i18n_fr"))
 
 local board_module       = lrequire("board")
@@ -25,6 +31,11 @@ local DailySeed = lrequire("daily_seed")
 
 local SudokuScreen = lrequire("screen")
 local generateWithProgress = lrequire("common/base_screen").generateWithProgress
+
+-- Spelled out rather than read off self.name: ReaderUI/FileManager
+-- rewrite an instance's name to "reader<id>"/"filemanager<id>" right
+-- after it is built, so self.name is not the plugin id after :init().
+local PLUGIN_ID = "sudoku"
 
 local Sudoku = WidgetContainer:extend{
     name        = "sudoku",
@@ -110,6 +121,7 @@ end
 
 function Sudoku:showGame()
     if self.screen then return end
+    self._session_start = os.time()
     self.active_mode = "regular"
     self.screen = SudokuScreen:new{
         board  = self:getBoard(),
@@ -120,6 +132,7 @@ end
 
 function Sudoku:showDailyChallenge()
     if self.screen then return end
+    self._session_start = os.time()
     self.active_mode = "daily"
     self.screen = SudokuScreen:new{
         board  = self:getDailyBoard(),
@@ -129,7 +142,31 @@ function Sudoku:showDailyChallenge()
 end
 
 function Sudoku:onScreenClosed()
+    local elapsed = self._session_start and (os.time() - self._session_start) or 0
+    self._session_start = nil
+    if ok_stats then
+        local cur = StatsExporter:get(PLUGIN_ID) or {}
+        StatsExporter:record(PLUGIN_ID, {
+            sessions    = (cur.sessions or 0) + 1,
+            last_played = os.time(),
+            time_played = (cur.time_played or 0) + elapsed,
+        })
+    end
     self.screen = nil
+end
+
+-- KOReader >= 2026.07 plugin management (PluginLoader, PR #15240).
+-- PluginLoader removes self.settings_file itself; what is left is the
+-- open game screen and this game's row in the shared game_stats.lua.
+function Sudoku:stopPlugin()
+    if self.screen then
+        UIManager:close(self.screen)
+        self.screen = nil
+    end
+end
+
+function Sudoku:deletePluginSettings()
+    if ok_stats then StatsExporter:remove(PLUGIN_ID) end
 end
 
 return Sudoku
