@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.0] - 2026-10-01
+
+### Added
+- Play sessions are now recorded in the shared `game_stats.lua`, so the game
+  finally appears in Dashboard's statistics. Every variant tracked its own
+  saved grid but none of them ever reported a session, which is why they were
+  all missing from the "most played" list however long you had played.
+- `stopPlugin()` and `deletePluginSettings()`, the hooks KOReader 2026.07
+  calls when a plugin is deleted from the device (PR #15240): the first closes
+  an open game screen, the second drops this game's statistics row.
+
 ## [2.3.2] - 2026-09-30
 
 ### Fixed
