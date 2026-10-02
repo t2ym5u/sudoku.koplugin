@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.1] - 2026-10-02
+
+### Fixed
+- Restored the hint and status translations. This plugin shipped its own
+  `i18n.lua` carrying 28 strings -- the hint explanations, "Tap a cell, then
+  pick a number.", "There is a wrong value on the board." and the technique
+  names. `package.loaded` is keyed by module name alone, so every
+  `require("i18n")` on the device resolves to one module and the first plugin
+  loaded wins it. Every plugin's `i18n_fr.lua` merges into that one shared
+  table, where plugins silently overwrite each other's translations. On any
+  install that also had an alphabetically earlier plugin, this plugin's module
+  was never the one consulted and those 28 strings rendered in English even in
+  French. They now live in `i18n_fr.lua`, which is merged into whichever
+  module won, so they resolve either way. `i18n.lua` stays as the fallback for
+  an install carrying no other plugin, but holds no strings of its own any
+  more.
+
 ## [2.4.0] - 2026-10-01
 
 ### Added
