@@ -105,8 +105,12 @@ function SudokuBoardWidget:paintTo(bb, x, y)
             else
                 local notes = self.board:getCellNotes(row, col)
                 if notes then
-                    local mini_w       = cell / box_cols
-                    local mini_h       = cell / box_rows
+                    -- Lay the notes out inside the grid lines, not under
+                    -- them: on a 16x16 grid a mini cell is only ~14 px and a
+                    -- box line would otherwise eat into its first row.
+                    local inset        = Size.line.thick
+                    local mini_w       = (cell - 2 * inset) / box_cols
+                    local mini_h       = (cell - 2 * inset) / box_rows
                     local mini_padding = self.note_mini_padding or 0
                     local mini_inner_w = math.max(1, math.floor(mini_w - 2 * mini_padding))
                     local mini_inner_h = math.max(1, math.floor(mini_h - 2 * mini_padding))
@@ -114,8 +118,8 @@ function SudokuBoardWidget:paintTo(bb, x, y)
                         if notes[digit] then
                             local mini_col    = (digit - 1) % box_cols
                             local mini_row    = math.floor((digit - 1) / box_cols)
-                            local mini_x      = x + (col - 1) * cell + mini_col * mini_w
-                            local mini_y      = y + (row - 1) * cell + mini_row * mini_h
+                            local mini_x      = x + (col - 1) * cell + inset + mini_col * mini_w
+                            local mini_y      = y + (row - 1) * cell + inset + mini_row * mini_h
                             local note_text   = digitToChar(digit)
                             local note_m      = RenderText:sizeUtf8Text(0, mini_inner_w, self.note_face, note_text, true, false)
                             local note_baseline = mini_y + mini_padding + math.floor((mini_inner_h + note_m.y_top - note_m.y_bottom) / 2)
