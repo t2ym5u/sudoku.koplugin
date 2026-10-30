@@ -14,16 +14,9 @@ local function lrequire_common(name)
     return package.loaded[key]
 end
 
-local ButtonTable = require("ui/widget/buttontable")
 local Device      = require("device")
-local FrameContainer = require("ui/widget/container/framecontainer")
-local HorizontalGroup = require("ui/widget/horizontalgroup")
-local HorizontalSpan  = require("ui/widget/horizontalspan")
 local Menu        = require("ui/widget/menu")
-local Size        = require("ui/size")
 local UIManager   = require("ui/uimanager")
-local VerticalGroup = require("ui/widget/verticalgroup")
-local VerticalSpan  = require("ui/widget/verticalspan")
 local _           = require("i18n")
 local T           = require("ffi/util").template
 
@@ -38,11 +31,6 @@ local generateWithProgress = common.generateWithProgress
 
 local DeviceScreen = Device.screen
 
--- Digits 10+ display as A-G (must match board_widget)
-local function digitToChar(d)
-    return d <= 9 and tostring(d) or string.char(55 + d)
-end
-
 -- ---------------------------------------------------------------------------
 -- SudokuScreen
 -- ---------------------------------------------------------------------------
@@ -56,6 +44,8 @@ Each row, each column, and each of the nine 3×3 boxes must contain every digit 
 
 Given digits are fixed and cannot be changed.
 
+Other grid sizes follow the same rules with their own boxes: 4×4, 6×6, 12×12 and 16×16. Beyond 9, the letters A to G stand for 10 to 16.
+
 Tip: use Note mode to pencil in candidate digits before committing.]])
 
 local GAME_RULES_FR = [[
@@ -67,127 +57,36 @@ Chaque ligne, chaque colonne et chacun des neuf carrés 3×3 doit contenir tous 
 
 Les chiffres donnés sont fixes et ne peuvent pas être modifiés.
 
+Les autres tailles de grille (4×4, 6×6, 12×12 et 16×16) suivent les mêmes règles avec leurs propres carrés. Au-delà de 9, les lettres A à G valent 10 à 16.
+
 Conseil : utilisez le mode Note pour inscrire en petit les chiffres candidats avant de vous décider.
 ]]
 
 local SudokuScreen = BaseScreen:extend{}
 
 function SudokuScreen:buildLayout()
-    local is_landscape = DeviceScreen:getWidth() > DeviceScreen:getHeight()
-    local sw = DeviceScreen:getWidth()
-    local sh = DeviceScreen:getHeight()
-
-    -- In portrait mode, cap the board size so that the full layout (buttons +
-    -- board + status + keypad) fits within the screen height.
-    local max_board_size
-    if not is_landscape then
-        local btn_row_h    = Size.item.height_default + 2 * Size.padding.buttontable
-        local frame_h      = (Size.padding.large + Size.margin.default) * 2
-        local span         = Size.span.vertical_large
-        local keypad_rows  = self.board.box_rows + 1   -- digit rows + utility row
-        local status_h     = 2 * Size.item.height_default  -- budget for 2 status lines
-        local non_board_h  = 5 * span + btn_row_h + status_h + keypad_rows * btn_row_h + frame_h
-        max_board_size = sh - non_board_h
-    end
-
-    self.board_widget = SudokuBoardWidget:new{
-        board              = self.board,
-        max_size           = max_board_size,
-        onSelectionChanged = function() self:updateStatus() end,
-    }
-
-    local board_frame = FrameContainer:new{
-        padding = Size.padding.large,
-        margin  = Size.margin.default,
-        self.board_widget,
-    }
-
-    local board_frame_size  = self.board_widget.size + (Size.padding.large + Size.margin.default) * 2
-    local right_panel_width = sw - board_frame_size - Size.span.horizontal_default
-    local button_width = is_landscape
-        and math.max(right_panel_width - Size.span.horizontal_default, 100)
-        or  math.floor(sw * 0.9)
-    local keypad_width = is_landscape and button_width or math.floor(sw * 0.75)
-
-    self.status_text:setMaxWidth(is_landscape and button_width or board_frame_size)
-
-    -- Title bar with Options menu
     local title_bar = self:buildTitleBar(_("Sudoku"), function()
         return {
             { text = _("New game"),                    callback = function() self:onNewGame() end },
+            { text = self:getGridButtonText(),         callback = function() self:openGridMenu() end },
+            { text = self:getDifficultyButtonText(),   callback = function() self:openDifficultyMenu() end },
+            { text = self.board:isShowingSolution() and _("Hide solution") or _("Show solution"),
+              callback = function() self:toggleSolution() end },
             { text = self.plugin:isDailyCompletedToday() and _("Daily Challenge ✓") or _("Daily Challenge"),
               callback = function()
                   self:closeScreen()
                   self.plugin:showDailyChallenge()
               end },
-            { text = self:getGridButtonText(),         callback = function() self:openGridMenu() end },
-            { text = self:getDifficultyButtonText(),   callback = function() self:openDifficultyMenu() end },
-            { text = self.board:isShowingSolution() and _("Hide result") or _("Show result"),
-              callback = function() self:toggleSolution() end },
             self:makeRulesButtonConfig(GAME_RULES_EN, GAME_RULES_FR),
         }
     end)
-
-    -- Digit keypad
-    local n        = self.board.n
-    local box_rows = self.board.box_rows
-    local box_cols = self.board.box_cols
-    local keypad_rows = {}
-    local digit = 1
-    for _ = 1, box_rows do
-        local row = {}
-        for _ = 1, box_cols do
-            local d = digit
-            row[#row + 1] = {
-                id = "digit_" .. d, text = digitToChar(d),
-                callback = function() self:onDigit(d) end,
-            }
-            digit = digit + 1
-        end
-        keypad_rows[#keypad_rows + 1] = row
-    end
-    keypad_rows[#keypad_rows + 1] = {
-        { id = "note_button", text = self:getNoteButtonText(),
-          callback = function() self:toggleNoteMode() end },
-        { text = _("Erase"),  callback = function() self:onErase() end },
-        { text = _("Check"),  callback = function() self:checkProgress() end },
-        { text = _("Hint"),   callback = function() self:onHint() end },
-        { id = "undo_button", text = _("Undo"),
-          callback = function() self:onUndo() end },
+    local controls = self:buildKeypadControls()
+    self.board_widget = SudokuBoardWidget:new{
+        board              = self.board,
+        max_size           = self:getBoardMaxSize(title_bar, controls),
+        onSelectionChanged = function() self:updateStatus() end,
     }
-    local keypad = ButtonTable:new{
-        width = keypad_width, shrink_unneeded_width = true, buttons = keypad_rows,
-    }
-    self.note_button  = keypad:getButtonById("note_button")
-    self.undo_button  = keypad:getButtonById("undo_button")
-    self.digit_buttons = {}
-    for d = 1, n do
-        self.digit_buttons[d] = keypad:getButtonById("digit_" .. d)
-    end
-
-    if is_landscape then
-        local right_panel = VerticalGroup:new{
-            align = "center",
-            self.status_text,
-            VerticalSpan:new{ width = Size.span.vertical_large },
-            keypad,
-        }
-        local content = HorizontalGroup:new{
-            align = "center",
-            board_frame,
-            HorizontalSpan:new{ width = Size.span.horizontal_default },
-            right_panel,
-        }
-        self:buildLandscapeLayout(title_bar, content)
-    else
-        local content = VerticalGroup:new{
-            align = "center",
-            board_frame,
-            VerticalSpan:new{ width = Size.span.vertical_large },
-            self.status_text,
-        }
-        self:buildPortraitLayout(title_bar, content, keypad)
-    end
+    self:placeBoard(title_bar, self.board_widget, controls)
     self:ensureShowButtonState()
     self:updateNoteButton()
     self:updateUndoButton()
@@ -203,11 +102,11 @@ end
 
 function SudokuScreen:getDifficultyButtonText()
     local label = DIFFICULTY_LABELS[self.board.difficulty] or self.board.difficulty
-    return T(_("Diff: %1"), label)
+    return T(_("Difficulty: %1"), label)
 end
 
 function SudokuScreen:getGridButtonText()
-    return T(_("Grid: %1"), self.board.n .. "×" .. self.board.n)
+    return T(_("Size: %1"), self.board.n .. "×" .. self.board.n)
 end
 
 function SudokuScreen:updateGridButton()
@@ -275,7 +174,7 @@ function SudokuScreen:openGridMenu()
         }
     end
     menu = Menu:new{
-        title    = _("Select grid size"),
+        title    = _("Select size"),
         item_table = items,
         width    = math.floor(DeviceScreen:getWidth() * 0.7),
         height   = math.floor(DeviceScreen:getHeight() * 0.9),
@@ -283,6 +182,18 @@ function SudokuScreen:openGridMenu()
         show_parent = self,
     }
     UIManager:show(menu)
+end
+
+-- The Daily Challenge is one fixed puzzle a day: "New game" there leaves it
+-- for the regular game instead of overwriting today's puzzle with a random
+-- one (which the menu entry used to do).
+function SudokuScreen:onNewGame()
+    if self.plugin.active_mode == "daily" then
+        self:closeScreen()
+        self.plugin:showGame()
+        return
+    end
+    common.BaseScreen.onNewGame(self)
 end
 
 function SudokuScreen:onGridChange(grid_id)
@@ -293,30 +204,6 @@ function SudokuScreen:onGridChange(grid_id)
     self.plugin.board = self.board
     self.plugin:saveState()
     self:buildLayout()
-    UIManager:setDirty(self, function() return "ui", self.dimen end)
-end
-
--- ---------------------------------------------------------------------------
--- Status bar
--- ---------------------------------------------------------------------------
-
-function SudokuScreen:updateStatus(message)
-    local status
-    if message then
-        status = message
-    else
-        local remaining = self.board:getRemainingCells()
-        local row, col  = self.board:getSelection()
-        status = T(_("Selected: %1,%2  ·  Empty cells: %3"), row, col, remaining)
-        if self.board:isShowingSolution() then
-            status = status .. "\n" .. _("Result is being shown; editing is disabled.")
-        elseif self.board:isSolved() then
-            status = _("Congratulations! Puzzle solved.")
-        elseif self.note_mode then
-            status = status .. "\n" .. _("Note mode is ON.")
-        end
-    end
-    self.status_text:setText(status)
     UIManager:setDirty(self, function() return "ui", self.dimen end)
 end
 

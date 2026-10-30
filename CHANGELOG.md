@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.0] - 2026-10-30
+
+### Changed
+- Redesigned play screen (sudoku-common 1.5.0): the board is larger, filling
+  the room the controls leave, with the digit pad on one even row (two for
+  12×12 and 16×16) and Note / Erase / Check / Hint / Undo in a full-width bar
+  under the status line.
+- The status line reads "9×9 · Medium · Empty: 45" and wraps in landscape
+  instead of being cut off.
+- The title-bar menu follows the order every game uses: New game, "Size: …",
+  "Difficulty: …", "Show solution" / "Hide solution", Daily Challenge, Rules
+  (it read "Grid: …", "Diff: …" and "Show result" / "Hide result", with Daily
+  Challenge second).
+- Once the puzzle is solved, the tool bar shows "New game" in place of
+  Note/Erase/Check/Hint/Undo; an Undo that un-solves the grid brings the tools
+  back.
+- The rules now cover the other grid sizes (4×4 to 16×16) and the letters A
+  to G that stand for 10 to 16.
+
+### Fixed
+- Digits overflowed their cells: the shared font fit accepted every size.
+  Digits and notes now fit their cell on every screen.
+- 16×16 notes were clipped: their font was too big for the tiny note cells,
+  and box lines covered the first row of notes. Notes are now laid out inside
+  the grid lines.
+- "New game" in the Daily Challenge replaced today's puzzle with a random
+  one. It now leaves the challenge for the regular game.
+
 ## [2.4.1] - 2026-10-02
 
 ### Fixed

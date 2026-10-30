@@ -44,8 +44,8 @@ Fill the 9×9 grid with digits 1–9. Each row, each column, and each 3×3 box m
 | Check progress | Tap **Check** |
 | Get a hint | Tap **Hint** (tap again to go deeper) |
 | New game | Tap **New game** |
-| Change grid size | Tap **Grid** |
-| Change difficulty | Tap **Diff** |
+| Change grid size | Tap **Size** |
+| Change difficulty | Tap **Difficulty** |
 | Show rules | Tap **Rules** |
 
 ## License
