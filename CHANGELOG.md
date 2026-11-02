@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.0] - 2026-11-02
+
+### Changed
+- Listed under **Tools → Games → Sudoku** with the rest of the collection
+  instead of its own Tools entry. Installed without any other game, it keeps
+  its own entry.
+
 ## [2.5.0] - 2026-10-30
 
 ### Changed
