@@ -56,7 +56,19 @@ function Sudoku:init()
     self.ui.menu:registerToMainMenu(self)
 end
 
+-- Listed under Tools → Games with the rest of the fleet. games_menu comes
+-- from game-common, which this plugin does not ship: any other game's
+-- common/ provides it. Installed on its own, the game keeps its own entry.
 function Sudoku:addToMainMenu(menu_items)
+    local ok, GamesMenu = pcall(require, "games_menu")
+    if ok and type(GamesMenu) == "table" and GamesMenu.add then
+        GamesMenu.add(menu_items, {
+            id     = "sudoku",
+            label  = _("Sudoku"),
+            launch = function() self:showGame() end,
+        })
+        return
+    end
     menu_items.sudoku = {
         text         = _("Sudoku"),
         sorting_hint = "tools",
