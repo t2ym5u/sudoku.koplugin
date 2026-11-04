@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.8.0] - 2026-11-04
+
+### Changed
+- 16×16 Hard and Expert games are generated about 1.5× faster, with exactly
+  the same puzzles (the Daily Challenge is unchanged): worst case on a
+  desktop, 16×16 Expert 0.21 → 0.14 s, 16×16 Hard 0.13 → 0.08 s — on a Kobo
+  about 3.5 s instead of 5 s for the slowest grid. Smaller grids gain a few
+  percent. The progress bar still shows when it takes a while.
+- Shared sudoku-common 1.7.0 (incremental clue digging).
+- Uses less memory: the game loads when you open it, not when KOReader
+  starts, so it no longer takes memory or startup time while unplayed.
+
 ## [2.7.0] - 2026-11-04
 
 ### Changed
