@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.0] - 2026-11-04
+
+### Changed
+- New games are generated faster, with the same puzzles (the Daily Challenge
+  is unchanged): worst case on a desktop, 16×16 Expert 1.06 → 0.21 s,
+  16×16 Hard 0.9 → 0.13 s, 12×12 Expert 167 → 90 ms, 9×9 Expert 54 → 35 ms.
+  On a Kobo that is about 5 s instead of 26 s for the slowest grid; the
+  progress bar still shows when it takes a while.
+- Shared sudoku-common 1.6.0: the deduction check behind every clue the
+  generator digs out runs about twice as fast, with exactly the same
+  deductions, so a given seed still deals the same puzzle.
+
 ## [2.6.0] - 2026-11-02
 
 ### Changed
