@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.8.2] - 2026-11-06
+
+### Changed
+- Shared sudoku-common 1.9.0: Medium, Hard and Expert now each need their
+  own kind of reasoning on 9×9 and larger grids, not only fewer givens. Easy
+  is unchanged. The Daily Challenge grid may change once after updating.
+
 ## [2.8.1] - 2026-11-04
 
 ### Fixed
