@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.8.3] - 2026-11-09
+
+### Changed
+- Shared sudoku-common 1.10.0: on 16×16, Expert is harder than Hard again
+  (Hard keeps more clues). Other sizes are unchanged.
+
 ## [2.8.2] - 2026-11-06
 
 ### Changed
