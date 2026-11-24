@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.8.5] - 2026-11-24
+
+### Changed
+- The game is saved a few seconds after a move instead of after every one (a
+  full rewrite of the settings file each time), and at once on close,
+  suspend or power-off. Needs sudoku-common 1.12.0.
+
 ## [2.8.4] - 2026-11-24
 
 ### Changed

@@ -145,6 +145,39 @@ function Sudoku:isDailyCompletedToday()
     return self.settings:readSetting("daily_completed_" .. today) == true
 end
 
+-- Settings writes wait a few seconds, once for any number of moves: a write
+-- dumps the whole file with an fsync (13-46 ms of CPU a move on a Kobo,
+-- measured 2026-11-24). Written at once on close, on uninstall, and on
+-- KOReader's FlushSettings (suspend, power-off, exit). See game-common's
+-- plugin_base.lua, "Writing the settings file".
+local FLUSH_DELAY = 3
+
+function Sudoku:_requestFlush()
+    self._flush_dirty = true
+    if self._flush_pending then return end
+    self._flush_pending = function()
+        self._flush_pending = nil
+        self:flushSettings()
+    end
+    UIManager:scheduleIn(FLUSH_DELAY, self._flush_pending)
+end
+
+function Sudoku:flushSettings()
+    if self._flush_pending then
+        UIManager:unschedule(self._flush_pending)
+        self._flush_pending = nil
+    end
+    if self._flush_dirty and self.settings then
+        self._flush_dirty = false
+        self.settings:flush()
+    end
+end
+
+-- Returns nothing, so the event goes on to the other modules.
+function Sudoku:onFlushSettings()
+    self:flushSettings()
+end
+
 function Sudoku:saveState()
     if self.active_mode == "daily" then
         if not self.daily_board then return end
@@ -153,13 +186,13 @@ function Sudoku:saveState()
         if self.daily_board:isSolved() then
             self.settings:saveSetting("daily_completed_" .. self.daily_board.daily_seed, true)
         end
-        self.settings:flush()
+        self:_requestFlush()
         return
     end
     if not self.board then return end
     self:ensureSettings()
     self.settings:saveSetting("state", self.board:serialize())
-    self.settings:flush()
+    self:_requestFlush()
 end
 
 function Sudoku:showGame()
@@ -195,6 +228,7 @@ function Sudoku:onScreenClosed()
             time_played = (cur.time_played or 0) + elapsed,
         })
     end
+    self:flushSettings()
     self.screen = nil
 end
 
@@ -202,6 +236,7 @@ end
 -- PluginLoader removes self.settings_file itself; what is left is the
 -- open game screen and this game's row in the shared game_stats.lua.
 function Sudoku:stopPlugin()
+    self:flushSettings()  -- or a pending write recreates the deleted file
     if self.screen then
         UIManager:close(self.screen)
         self.screen = nil
