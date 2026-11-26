@@ -1,4 +1,6 @@
 return {
+    -- _meta.lua description (shown by Plugin Manager, via the manifest)
+    ["Play touch-friendly Sudoku puzzles, resume later, and reveal the solution when needed."] = { fr = "Jouez au Sudoku au doigt, reprenez plus tard et affichez la solution si besoin.", es = "Juega al Sudoku con la pantalla táctil, continúa más tarde y muestra la solución cuando la necesites.", de = "Sudoku per Touch spielen, später weitermachen und bei Bedarf die Lösung anzeigen." },
     ["%1 fits in only one cell of column %2."] = { fr = "Le %1 ne peut aller que dans une seule case de la colonne %2.", es = "El %1 solo cabe en una casilla de la columna %2.", de = "Die %1 passt nur in eine Zelle von Spalte %2." },
     ["%1 fits in only one cell of row %2."] = { fr = "Le %1 ne peut aller que dans une seule case de la ligne %2.", es = "El %1 solo cabe en una casilla de la fila %2.", de = "Die %1 passt nur in eine Zelle von Zeile %2." },
     ["%1 fits in only one cell of that box."] = { fr = "Le %1 ne peut aller que dans une seule case de ce bloc.", es = "El %1 solo cabe en una casilla de esa caja.", de = "Die %1 passt nur in eine Zelle dieses Blocks." },
